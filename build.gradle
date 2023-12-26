@@ -1,56 +1,29 @@
 plugins {
-  id 'java'
-  id 'application'
-  id 'org.javamodularity.moduleplugin' version '1.8.12'
-  id 'org.openjfx.javafxplugin' version '0.0.13'
-  id 'org.beryx.jlink' version '2.25.0'
+    id 'java'
+    id 'application'
+    id 'org.javamodularity.moduleplugin' version '1.8.12'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
-group 'me.func.parametricfunction'
-version '1.0-SNAPSHOT'
 
 repositories {
-  mavenCentral()
+    mavenCentral()
 }
 
-ext {
-  junitVersion = '5.10.0'
-}
-
-sourceCompatibility = '21'
-targetCompatibility = '21'
-
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
   options.encoding = 'UTF-8'
 }
 
 application {
-  mainModule = 'me.func.parametricfunction'
-  mainClass = 'me.func.parametricfunction.HelloApplication'
+    mainModule = 'me.func.parametricfunction'
+    mainClass = 'me.func.parametricfunction.App'
 }
 
 javafx {
-  version = '21'
-  modules = ['javafx.controls', 'javafx.fxml']
+    version = '21'
+    modules = ['javafx.controls', 'javafx.fxml']
 }
 
 dependencies {
-
-  testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
-}
-
-test {
-useJUnitPlatform()}
-
-jlink {
-  imageZip = project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip")
-  options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
-  launcher {
-    name = 'app'
-  }
-}
-
-jlinkZip {
-  group = 'distribution'
+    implementation 'org.codehaus.groovy:groovy-all:3.0.20'
 }
