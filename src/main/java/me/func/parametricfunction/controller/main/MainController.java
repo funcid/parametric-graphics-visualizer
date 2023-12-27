@@ -27,6 +27,9 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
 public class MainController {
+
+    private static final int HALF_LENGTH_OFFSET = 2;
+
     @FXML
     private TextField inputXField;
     @FXML
@@ -41,10 +44,10 @@ public class MainController {
 
     @FXML
     private void initialize() {
-        configureBuildButton();
+        setupBuildButton();
     }
 
-    private void configureBuildButton() {
+    private void setupBuildButton() {
         buildButton.setOnAction(event -> {
             if (anyInputFieldIsEmpty()) return;
             loadGraph();
@@ -55,9 +58,8 @@ public class MainController {
         return inputXField.getText().isEmpty() || inputYField.getText().isEmpty() || inputZField.getText().isEmpty();
     }
 
-    private GroovyShell createMathShell() {
+    private GroovyShell initializeMathShell() {
         GroovyShell shell = new GroovyShell();
-
         shell.evaluate(
                 "cos = {double x -> Math.cos(Math.toRadians(x))}\n" +
                         "sin = {double x -> Math.sin(Math.toRadians(x))}\n" +
@@ -93,7 +95,7 @@ public class MainController {
         Point3D previous = null;
         Cylinder[] lines = new Cylinder[count - 1];
 
-        GroovyShell shell = createMathShell();
+        GroovyShell shell = initializeMathShell();
 
         for (double p = 0; p < count; p++) {
             shell.setVariable("x", p);
@@ -111,9 +113,9 @@ public class MainController {
         rect.setOpacity(0);
 
         group.getChildren().addAll(rect);
-        group.getChildren().addAll(setSize(length, r, 0, 1, 0, false));
-        group.getChildren().addAll(setSize(length, r, 1, 0, 0, false));
-        group.getChildren().addAll(setSize(length, r, 0, 0, 1, true));
+        group.getChildren().addAll(createNumberTextAreas(length, r, 0, 1, 0, false));
+        group.getChildren().addAll(createNumberTextAreas(length, r, 1, 0, 0, false));
+        group.getChildren().addAll(createNumberTextAreas(length, r, 0, 0, 1, true));
         group.getChildren().addAll(ordinate, z, axis);
         group.getChildren().addAll(lines);
 
@@ -190,26 +192,42 @@ public class MainController {
         return line;
     }
 
-    private TextArea[] setSize(int length, int radius, int XProperty, int YProperty, int ZProperty, boolean normal) {
+    private TextArea[] createNumberTextAreas(int length, int radius, int xProperty, int yProperty, int zProperty, boolean isNormal) {
         TextArea[] numbers = new TextArea[length];
-        for (int i = -length / 2; i < length / 2; i++) {
-            numbers[i + length / 2] = new TextArea(-i + "");
-            numbers[i + length / 2].translateXProperty().set(-i * radius * XProperty);
-            numbers[i + length / 2].translateYProperty().set(i * radius * YProperty);
-            numbers[i + length / 2].translateZProperty().set(i * radius * ZProperty);
-            numbers[i + length / 2].setMaxWidth(radius);
-            numbers[i + length / 2].setMaxHeight(radius);
-            numbers[i + length / 2].setFont(font);
-            numbers[i + length / 2].setEditable(false);
-            numbers[i + length / 2].setMouseTransparent(true);
-            numbers[i + length / 2].setFocusTraversable(false);
-            if (normal) {
-                numbers[i + length / 2].translateYProperty().set(i * radius * YProperty - radius / 2);
-                numbers[i + length / 2].setRotationAxis(Rotate.X_AXIS);
-                numbers[i + length / 2].setRotate(270);
-            }
+
+        for (int i = -length / HALF_LENGTH_OFFSET; i < length / HALF_LENGTH_OFFSET; i++) {
+            int index = i + length / HALF_LENGTH_OFFSET;
+            numbers[index] = initializeTextArea(i, radius, xProperty, yProperty, zProperty, isNormal);
         }
+
         return numbers;
+    }
+
+    private TextArea initializeTextArea(int value, int radius, int xProperty, int yProperty, int zProperty, boolean isNormal) {
+        TextArea textArea = new TextArea(String.valueOf(-value));
+
+        setupTextAreaProperties(textArea, value, radius, xProperty, yProperty, zProperty, isNormal);
+
+        return textArea;
+    }
+
+    private void setupTextAreaProperties(TextArea textArea, int value, int radius, int xProperty, int yProperty, int zProperty, boolean isNormal) {
+        textArea.translateXProperty().set(-value * radius * xProperty);
+        textArea.translateYProperty().set(value * radius * yProperty);
+
+        if (isNormal) {
+            textArea.translateYProperty().set(value * radius * yProperty - (double) radius / 2);
+            textArea.setRotationAxis(Rotate.X_AXIS);
+            textArea.setRotate(270);
+        }
+
+        textArea.translateZProperty().set(value * radius * zProperty);
+        textArea.setMaxWidth(radius);
+        textArea.setMaxHeight(radius);
+        textArea.setFont(font);
+        textArea.setEditable(false);
+        textArea.setMouseTransparent(true);
+        textArea.setFocusTraversable(false);
     }
 
     public void setStage(Stage stage) {
