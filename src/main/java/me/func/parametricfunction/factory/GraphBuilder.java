@@ -19,6 +19,7 @@ import static me.func.parametricfunction.util.MathEvaluator.initializeMathShell;
 
 public class GraphBuilder {
 
+    // Константы, используемые для определения размеров и количества графических элементов.
     private static final int GRAPH_COUNT = 2000;
     private static final int SCENE_WIDTH = 1000;
     private static final int SCENE_HEIGHT = 1000;
@@ -41,18 +42,19 @@ public class GraphBuilder {
             String yField,
             String zField
     ) {
+        // Инициализация группы и камеры для отображения графа
         Group group = new Group();
-
         Camera camera = cameraHandler.initializeCamera();
 
+        // Создание осей координат и линий графика
         Cylinder axis = createAxis(Color.LIGHTBLUE, Rotate.X_AXIS, 90, materialFactory);
         Cylinder ordinate = createAxis(Color.RED, null, 0, materialFactory);
         Cylinder z = createAxis(Color.GREEN, Rotate.Z_AXIS, 90, materialFactory);
 
         Cylinder[] lines = generateGraphLines(xField, yField, zField, materialFactory.getBlack());
 
+        // Создание прозрачного прямоугольника и добавление текстовых полей
         Rectangle rectangle = createTransparentRectangle();
-
         group.getChildren().add(rectangle);
         group.getChildren().addAll(textAreaFactory.createNumberTextAreas(0, 1, 0, false));
         group.getChildren().addAll(textAreaFactory.createNumberTextAreas(1, 0, 0, false));
@@ -62,6 +64,7 @@ public class GraphBuilder {
         group.getChildren().add(axis);
         group.getChildren().addAll(lines);
 
+        // Установка сцены и камеры, добавление обработчиков событий
         Scene scene = new Scene(group, SCENE_WIDTH, SCENE_HEIGHT);
         scene.setCamera(camera);
 
@@ -101,6 +104,7 @@ public class GraphBuilder {
         Cylinder[] lines = new Cylinder[GRAPH_COUNT - 1];
         Point3D previous = null;
 
+        // Проходимся по каждой точке графика и создаем линии между ними
         for (double p = 0; p < GRAPH_COUNT; p++) {
             shell.setVariable("x", p);
             Point3D now = evaluatePoint3D(
@@ -118,13 +122,17 @@ public class GraphBuilder {
     }
 
     private Cylinder createConnection(Point3D origin, Point3D target, Material material) {
+        // Определяем ось Y для вычисления угла поворота линии
         Point3D yAxis = new Point3D(0, 1, 0);
         Point3D diff = target.subtract(origin);
 
+        // Находим среднюю точку между начальной и конечной точками
         Point3D mid = target.midpoint(origin);
+        // Создаем цилиндр, который представляет соединительную линию
         Cylinder line = new Cylinder(.9, diff.magnitude() + .2);
         line.setMaterial(material);
 
+        // Добавляем трансформации для корректного отображения соединительной линии
         line.getTransforms().addAll(
                 new Translate(mid.getX(), mid.getY(), mid.getZ()),
                 new Rotate(-Math.toDegrees(Math.acos(diff.normalize().dotProduct(yAxis))), diff.crossProduct(yAxis))

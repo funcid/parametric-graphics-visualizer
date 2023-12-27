@@ -5,6 +5,7 @@ import javafx.geometry.Point3D;
 
 public class MathEvaluator {
 
+    // Радиус для вычисления точек в трехмерном пространстве
     private static final int RADIUS = 200;
 
     public static GroovyShell initializeMathShell() {
@@ -19,6 +20,7 @@ public class MathEvaluator {
     }
 
     public static Point3D evaluatePoint3D(GroovyShell shell, String xText, String yText, String zText) {
+        // Вычисление координат точки в трехмерном пространстве
         return new Point3D(
                 (double) shell.evaluate(xText) * RADIUS,
                 (double) shell.evaluate(yText) * -RADIUS,

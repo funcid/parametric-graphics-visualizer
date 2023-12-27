@@ -9,6 +9,7 @@ import javafx.scene.transform.Rotate;
 
 public class CameraHandler {
 
+    // Константа для определения расстояния перемещения камеры при нажатии клавиш
     private static final double MOVE_DISTANCE = 100.0;
 
     public void addEventHandlers(Scene scene, Rectangle rectangle) {
@@ -27,6 +28,7 @@ public class CameraHandler {
         scene.setOnKeyPressed(event -> {
             Camera camera = scene.getCamera();
 
+            // Перемещение камеры в зависимости от нажатой клавиши
             switch (event.getCode()) {
                 case W:
                     camera.translateYProperty().set(camera.getTranslateY() - MOVE_DISTANCE);
@@ -52,6 +54,7 @@ public class CameraHandler {
 
     private void addMouseMoveEventHandler(Scene scene, Rectangle rectangle) {
         scene.setOnMouseMoved(event -> {
+            // Создание подсказки с координатами курсора и привязка её к прямоугольнику
             Tooltip tooltip = new Tooltip("X: " + event.getX() + "; Y: " + event.getY());
             Tooltip.install(rectangle, tooltip);
         });
@@ -61,6 +64,8 @@ public class CameraHandler {
         scene.setOnScroll(event -> {
             Camera camera = scene.getCamera();
             double delta = event.getDeltaY();
+
+            // Изменение позиции камеры в зависимости от прокрутки и текущего угла поворота
             camera.translateZProperty().set(camera.getTranslateZ() + delta);
             camera.translateXProperty().set(camera.getTranslateX() + (camera.getRotate() > 180 ? -event.getX() / 25 : event.getX() / 25));
             camera.translateYProperty().set(camera.getTranslateY() + (camera.getRotate() > 180 ? -event.getY() / 25 : event.getY() / 25));

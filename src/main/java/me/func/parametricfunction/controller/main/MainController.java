@@ -25,7 +25,8 @@ public class MainController {
 
     private void setupBuildButton() {
         buildButton.setOnAction(event -> {
-            if (anyInputFieldIsEmpty()) return;
+            if (anyInputFieldIsEmpty()) return; // Проверка на пустые поля ввода.
+            // Загрузка графика через метод loadGraph из класса GraphBuilder
             App.getApp().getGraphBuilder().loadGraph(
                     stage,
                     inputXField.getText(),
@@ -35,6 +36,7 @@ public class MainController {
         });
     }
 
+    // Проверяет, пустые ли поля ввода для координат
     private boolean anyInputFieldIsEmpty() {
         return inputXField.getText().isEmpty() || inputYField.getText().isEmpty() || inputZField.getText().isEmpty();
     }
