@@ -19,13 +19,15 @@ import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
+import me.func.parametricfunction.util.MathEvaluator;
+
+import static me.func.parametricfunction.util.MathEvaluator.*;
 
 public class MainController {
 
     private static final int HALF_LENGTH_OFFSET = 2;
     private static final double MOVE_DISTANCE = 100.0;
     private static final int GRAPH_COUNT = 2000;
-    private static final int RADIUS = 200;
     private static final int SCENE_WIDTH = 1000;
     private static final int SCENE_HEIGHT = 1000;
     private static final int RECTANGLE_DIMENSION = 1000;
@@ -60,17 +62,6 @@ public class MainController {
 
     private boolean anyInputFieldIsEmpty() {
         return inputXField.getText().isEmpty() || inputYField.getText().isEmpty() || inputZField.getText().isEmpty();
-    }
-
-    private GroovyShell initializeMathShell() {
-        GroovyShell shell = new GroovyShell();
-        shell.evaluate(
-                "cos = {double x -> Math.cos(Math.toRadians(x))}\n" +
-                        "sin = {double x -> Math.sin(Math.toRadians(x))}\n" +
-                        "exp = {double x -> Math.exp(Math.toRadians(x))}\n" +
-                        "pi = Math.PI\n"
-        );
-        return shell;
     }
 
     private void loadGraph() {
@@ -176,7 +167,12 @@ public class MainController {
 
         for (double p = 0; p < GRAPH_COUNT; p++) {
             shell.setVariable("x", p);
-            Point3D now = evaluatePoint3D(shell);
+            Point3D now = evaluatePoint3D(
+                    shell,
+                    inputXField.getText(),
+                    inputYField.getText(),
+                    inputZField.getText()
+            );
             if (p > 0) {
                 lines[(int) p - 1] = createConnection(previous, now);
             }
@@ -195,14 +191,6 @@ public class MainController {
         Rectangle rect = new Rectangle(-RECTANGLE_DIMENSION, -RECTANGLE_DIMENSION, TRANSPARENT_RECTANGLE_SIZE, TRANSPARENT_RECTANGLE_SIZE);
         rect.setOpacity(0);
         return rect;
-    }
-
-    private Point3D evaluatePoint3D(GroovyShell shell) {
-        return new Point3D(
-                (double) shell.evaluate(inputXField.getText()) * MainController.RADIUS,
-                (double) shell.evaluate(inputYField.getText()) * -MainController.RADIUS,
-                (double) shell.evaluate(inputZField.getText()) * MainController.RADIUS
-        );
     }
 
     private PhongMaterial createMaterial(Color color) {
