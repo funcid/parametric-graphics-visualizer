@@ -26,7 +26,7 @@
 
 <h3>Начало работы</h3>
 
-Для начала склонируйте репозиторий командой `git clone https://github.com/reidjJava/parametric-graphics-visualizer.git`.
+Для начала склонируйте репозиторий командой `git clone https://github.com/funcid/parametric-graphics-visualizer.git`.
 После клонирования репозитория, у вас появится локальная копия проекта на вашем компьютере. Теперь вы можете приступить к разработке или использованию приложения.
 
 <h3>Фото</h3>
