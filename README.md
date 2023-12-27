@@ -33,12 +33,12 @@
 
 Главное меню приложения
 <p align="center">
- <img width="500px" src="https://github.com/reidjJava/parametric-graphics-visualizer/blob/main/images/mainmenu.png"/>
+ <img width="500px" src="https://github.com/funcid/parametric-graphics-visualizer/blob/main/images/mainmenu.png"/>
 </p>
 
 Пример графа
 <p align="center">
- <img width="500px" src="https://github.com/reidjJava/parametric-graphics-visualizer/blob/main/images/result.png"/>
+ <img width="500px" src="https://github.com/funcid/parametric-graphics-visualizer/blob/main/images/result.png"/>
 </p>
 
 
