@@ -19,14 +19,15 @@ import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
+import me.func.parametricfunction.handler.CameraHandler;
 import me.func.parametricfunction.util.MathEvaluator;
 
+import static me.func.parametricfunction.handler.CameraHandler.*;
 import static me.func.parametricfunction.util.MathEvaluator.*;
 
 public class MainController {
 
     private static final int HALF_LENGTH_OFFSET = 2;
-    private static final double MOVE_DISTANCE = 100.0;
     private static final int GRAPH_COUNT = 2000;
     private static final int SCENE_WIDTH = 1000;
     private static final int SCENE_HEIGHT = 1000;
@@ -75,9 +76,9 @@ public class MainController {
 
         Cylinder[] lines = generateGraphLines();
 
-        Rectangle rect = createTransparentRectangle();
+        Rectangle rectangle = createTransparentRectangle();
 
-        group.getChildren().add(rect);
+        group.getChildren().add(rectangle);
         group.getChildren().addAll(createNumberTextAreas(0, 1, 0, false));
         group.getChildren().addAll(createNumberTextAreas(1, 0, 0, false));
         group.getChildren().addAll(createNumberTextAreas(0, 0, 1, true));
@@ -89,59 +90,8 @@ public class MainController {
         Scene scene = new Scene(group, SCENE_WIDTH, SCENE_HEIGHT);
         scene.setCamera(camera);
 
-        addEventHandlers(scene, rect);
+        addEventHandlers(scene, rectangle);
         initializeAndShowStage(scene);
-    }
-
-    private void addEventHandlers(Scene scene, Rectangle rectangle) {
-        addKeyboardEventHandler(scene);
-        addMouseMoveEventHandler(scene, rectangle);
-        addScrollEventHandler(scene);
-    }
-
-    private void addKeyboardEventHandler(Scene scene) {
-        scene.setOnKeyPressed(event -> {
-            Camera camera = scene.getCamera();
-
-            switch (event.getCode()) {
-                case W:
-                    camera.translateYProperty().set(camera.getTranslateY() - MOVE_DISTANCE);
-                    break;
-                case S:
-                    camera.translateYProperty().set(camera.getTranslateY() + MOVE_DISTANCE);
-                    break;
-                case A:
-                    camera.translateXProperty().set(camera.getTranslateX() - MOVE_DISTANCE);
-                    break;
-                case D:
-                    camera.translateXProperty().set(camera.getTranslateX() + MOVE_DISTANCE);
-                    break;
-                case E:
-                    camera.setRotationAxis(Rotate.Y_AXIS);
-                    camera.setRotate(camera.getRotate() + 20);
-                    break;
-                default:
-                    break;
-            }
-        });
-    }
-
-
-    private void addMouseMoveEventHandler(Scene scene, Rectangle rectangle) {
-        scene.setOnMouseMoved(event -> {
-            Tooltip tooltip = new Tooltip("X: " + event.getX() + "; Y: " + event.getY());
-            Tooltip.install(rectangle, tooltip);
-        });
-    }
-
-    private void addScrollEventHandler(Scene scene) {
-        scene.setOnScroll(event -> {
-            Camera camera = scene.getCamera();
-            double delta = event.getDeltaY();
-            camera.translateZProperty().set(camera.getTranslateZ() + delta);
-            camera.translateXProperty().set(camera.getTranslateX() + (camera.getRotate() > 180 ? -event.getX() / 25 : event.getX() / 25));
-            camera.translateYProperty().set(camera.getTranslateY() + (camera.getRotate() > 180 ? -event.getY() / 25 : event.getY() / 25));
-        });
     }
 
     private Camera initializeCamera() {
