@@ -11,9 +11,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
@@ -23,12 +20,19 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
-
 public class MainController {
 
     private static final int HALF_LENGTH_OFFSET = 2;
+    private static final double MOVE_DISTANCE = 100.0;
+    private static final int GRAPH_COUNT = 2000;
+    private static final int RADIUS = 200;
+    private static final int SCENE_WIDTH = 1000;
+    private static final int SCENE_HEIGHT = 1000;
+    private static final int RECTANGLE_DIMENSION = 1000;
+    private static final int TRANSPARENT_RECTANGLE_SIZE = 2000;
+    private static final int TEXT_AREA_OFFSET = 150;
+    private static final int TEXT_AREA_HALF_LENGTH_OFFSET = TEXT_AREA_OFFSET / HALF_LENGTH_OFFSET;
+    private static final double TEXT_AREA_TRANSLATE_FACTOR = 200.0;
 
     @FXML
     private TextField inputXField;
@@ -72,102 +76,133 @@ public class MainController {
     private void loadGraph() {
         Group group = new Group();
 
-        Camera camera = new PerspectiveCamera(true);
-        camera.setFarClip(500000);
+        Camera camera = initializeCamera();
 
-        Cylinder axis = new Cylinder(1, 100000);
-        axis.setRotationAxis(Rotate.Z_AXIS);
-        axis.setRotate(90);
-        axis.setRotationAxis(Rotate.X_AXIS);
-        axis.setRotate(90);
-        axis.setMaterial(createMaterial(Color.LIGHTBLUE));
+        Cylinder axis = createAxis(Color.LIGHTBLUE, Rotate.X_AXIS, 90);
+        Cylinder ordinate = createAxis(Color.RED, null, 0);
+        Cylinder z = createAxis(Color.GREEN, Rotate.Z_AXIS, 90);
 
-        Cylinder ordinate = new Cylinder(1, 100000);
-        ordinate.setMaterial(createMaterial(Color.RED));
+        Cylinder[] lines = generateGraphLines();
 
-        Cylinder z = new Cylinder(1, 100000);
-        z.setRotationAxis(Rotate.Z_AXIS);
-        z.setRotate(90);
-        z.setMaterial(createMaterial(Color.GREEN));
+        Rectangle rect = createTransparentRectangle();
 
-        int count = 2000, r = 200, length = 150;
-
-        Point3D previous = null;
-        Cylinder[] lines = new Cylinder[count - 1];
-
-        GroovyShell shell = initializeMathShell();
-
-        for (double p = 0; p < count; p++) {
-            shell.setVariable("x", p);
-            Point3D now = new Point3D(
-                    (double) shell.evaluate(inputXField.getText()) * r,
-                    (double) shell.evaluate(inputYField.getText()) * -r,
-                    (double) shell.evaluate(inputZField.getText()) * r
-            );
-            if (p > 0)
-                lines[(int) p - 1] = createConnection(previous, now);
-            previous = now;
-        }
-
-        Rectangle rect = new Rectangle(-1000, -1000, 2000, 2000);
-        rect.setOpacity(0);
-
-        group.getChildren().addAll(rect);
-        group.getChildren().addAll(createNumberTextAreas(length, r, 0, 1, 0, false));
-        group.getChildren().addAll(createNumberTextAreas(length, r, 1, 0, 0, false));
-        group.getChildren().addAll(createNumberTextAreas(length, r, 0, 0, 1, true));
-        group.getChildren().addAll(ordinate, z, axis);
+        group.getChildren().add(rect);
+        group.getChildren().addAll(createNumberTextAreas(0, 1, 0, false));
+        group.getChildren().addAll(createNumberTextAreas(1, 0, 0, false));
+        group.getChildren().addAll(createNumberTextAreas(0, 0, 1, true));
+        group.getChildren().add(ordinate);
+        group.getChildren().add(z);
+        group.getChildren().add(axis);
         group.getChildren().addAll(lines);
 
-        Scene scene = new Scene(group, 1000, 1000);
+        Scene scene = new Scene(group, SCENE_WIDTH, SCENE_HEIGHT);
         scene.setCamera(camera);
 
-        stage.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+        addEventHandlers(scene, rect);
+        initializeAndShowStage(scene);
+    }
 
-            double y = camera.getScaleY(), p = camera.getScaleZ(), k = 100;
+    private void addEventHandlers(Scene scene, Rectangle rectangle) {
+        addKeyboardEventHandler(scene);
+        addMouseMoveEventHandler(scene, rectangle);
+        addScrollEventHandler(scene);
+    }
 
-            double xzLength = cos(p) * k;
-            double dx = xzLength * sin(y) * (camera.getRotate() % 360 >= 90 && camera.getRotate() % 360 <= 270 ? -1 : 1);
-            double dz = xzLength * cos(y) * (camera.getRotate() % 360 >= 90 && camera.getRotate() % 360 <= 270 ? -1 : 1);
-            double dy = k * sin(p);
+    private void addKeyboardEventHandler(Scene scene) {
+        scene.setOnKeyPressed(event -> {
+            Camera camera = scene.getCamera();
 
             switch (event.getCode()) {
                 case W:
-                    camera.translateYProperty().set(camera.getTranslateY() - dy);
+                    camera.translateYProperty().set(camera.getTranslateY() - MOVE_DISTANCE);
                     break;
                 case S:
-                    camera.translateYProperty().set(camera.getTranslateY() + dy);
-                    break;
-                case D:
-                    camera.translateXProperty().set(camera.getTranslateX() + dx);
-                    camera.translateZProperty().set(camera.getTranslateZ() - dz);
+                    camera.translateYProperty().set(camera.getTranslateY() + MOVE_DISTANCE);
                     break;
                 case A:
-                    camera.translateXProperty().set(camera.getTranslateX() - dx);
-                    camera.translateZProperty().set(camera.getTranslateZ() + dz);
+                    camera.translateXProperty().set(camera.getTranslateX() - MOVE_DISTANCE);
+                    break;
+                case D:
+                    camera.translateXProperty().set(camera.getTranslateX() + MOVE_DISTANCE);
                     break;
                 case E:
                     camera.setRotationAxis(Rotate.Y_AXIS);
                     camera.setRotate(camera.getRotate() + 20);
                     break;
+                default:
+                    break;
             }
         });
+    }
 
-        stage.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
-            Tooltip t = new Tooltip("X: " + event.getX() / r + "; Y: " + -event.getY() / r);
-            Tooltip.install(rect, t);
+
+    private void addMouseMoveEventHandler(Scene scene, Rectangle rectangle) {
+        scene.setOnMouseMoved(event -> {
+            Tooltip tooltip = new Tooltip("X: " + event.getX() + "; Y: " + event.getY());
+            Tooltip.install(rectangle, tooltip);
         });
+    }
 
-        stage.addEventHandler(ScrollEvent.SCROLL, event -> {
+    private void addScrollEventHandler(Scene scene) {
+        scene.setOnScroll(event -> {
+            Camera camera = scene.getCamera();
             double delta = event.getDeltaY();
             camera.translateZProperty().set(camera.getTranslateZ() + delta);
             camera.translateXProperty().set(camera.getTranslateX() + (camera.getRotate() > 180 ? -event.getX() / 25 : event.getX() / 25));
             camera.translateYProperty().set(camera.getTranslateY() + (camera.getRotate() > 180 ? -event.getY() / 25 : event.getY() / 25));
         });
+    }
 
+    private Camera initializeCamera() {
+        Camera camera = new PerspectiveCamera(true);
+        camera.setFarClip(500000);
+        return camera;
+    }
+
+    private Cylinder createAxis(Color color, Point3D rotationAxis, double rotationAngle) {
+        Cylinder axis = new Cylinder(1, 100000);
+        axis.setMaterial(createMaterial(color));
+        if (rotationAxis != null) {
+            axis.setRotationAxis(rotationAxis);
+            axis.setRotate(rotationAngle);
+        }
+        return axis;
+    }
+
+    private Cylinder[] generateGraphLines() {
+        GroovyShell shell = initializeMathShell();
+        Cylinder[] lines = new Cylinder[GRAPH_COUNT - 1];
+        Point3D previous = null;
+
+        for (double p = 0; p < GRAPH_COUNT; p++) {
+            shell.setVariable("x", p);
+            Point3D now = evaluatePoint3D(shell);
+            if (p > 0) {
+                lines[(int) p - 1] = createConnection(previous, now);
+            }
+            previous = now;
+        }
+        return lines;
+    }
+
+    private void initializeAndShowStage(Scene scene) {
         stage.setResizable(true);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private Rectangle createTransparentRectangle() {
+        Rectangle rect = new Rectangle(-RECTANGLE_DIMENSION, -RECTANGLE_DIMENSION, TRANSPARENT_RECTANGLE_SIZE, TRANSPARENT_RECTANGLE_SIZE);
+        rect.setOpacity(0);
+        return rect;
+    }
+
+    private Point3D evaluatePoint3D(GroovyShell shell) {
+        return new Point3D(
+                (double) shell.evaluate(inputXField.getText()) * MainController.RADIUS,
+                (double) shell.evaluate(inputYField.getText()) * -MainController.RADIUS,
+                (double) shell.evaluate(inputZField.getText()) * MainController.RADIUS
+        );
     }
 
     private PhongMaterial createMaterial(Color color) {
@@ -192,38 +227,38 @@ public class MainController {
         return line;
     }
 
-    private TextArea[] createNumberTextAreas(int length, int radius, int xProperty, int yProperty, int zProperty, boolean isNormal) {
-        TextArea[] numbers = new TextArea[length];
+    private TextArea[] createNumberTextAreas(int xProperty, int yProperty, int zProperty, boolean isNormal) {
+        TextArea[] numbers = new TextArea[TEXT_AREA_OFFSET];
 
-        for (int i = -length / HALF_LENGTH_OFFSET; i < length / HALF_LENGTH_OFFSET; i++) {
-            int index = i + length / HALF_LENGTH_OFFSET;
-            numbers[index] = initializeTextArea(i, radius, xProperty, yProperty, zProperty, isNormal);
+        for (int i = -TEXT_AREA_HALF_LENGTH_OFFSET; i < TEXT_AREA_HALF_LENGTH_OFFSET; i++) {
+            int index = i + TEXT_AREA_HALF_LENGTH_OFFSET;
+            numbers[index] = initializeTextArea(i, xProperty, yProperty, zProperty, isNormal);
         }
 
         return numbers;
     }
 
-    private TextArea initializeTextArea(int value, int radius, int xProperty, int yProperty, int zProperty, boolean isNormal) {
+    private TextArea initializeTextArea(int value, int xProperty, int yProperty, int zProperty, boolean isNormal) {
         TextArea textArea = new TextArea(String.valueOf(-value));
 
-        setupTextAreaProperties(textArea, value, radius, xProperty, yProperty, zProperty, isNormal);
+        setupTextAreaProperties(textArea, value, xProperty, yProperty, zProperty, isNormal);
 
         return textArea;
     }
 
-    private void setupTextAreaProperties(TextArea textArea, int value, int radius, int xProperty, int yProperty, int zProperty, boolean isNormal) {
-        textArea.translateXProperty().set(-value * radius * xProperty);
-        textArea.translateYProperty().set(value * radius * yProperty);
+    private void setupTextAreaProperties(TextArea textArea, int value, int xProperty, int yProperty, int zProperty, boolean isNormal) {
+        textArea.translateXProperty().set(-value * TEXT_AREA_TRANSLATE_FACTOR * xProperty);
+        textArea.translateYProperty().set(value * TEXT_AREA_TRANSLATE_FACTOR * yProperty);
 
         if (isNormal) {
-            textArea.translateYProperty().set(value * radius * yProperty - (double) radius / 2);
+            textArea.translateYProperty().set(value * TEXT_AREA_TRANSLATE_FACTOR * yProperty - (double) TEXT_AREA_TRANSLATE_FACTOR / 2);
             textArea.setRotationAxis(Rotate.X_AXIS);
             textArea.setRotate(270);
         }
 
-        textArea.translateZProperty().set(value * radius * zProperty);
-        textArea.setMaxWidth(radius);
-        textArea.setMaxHeight(radius);
+        textArea.translateZProperty().set(value * TEXT_AREA_TRANSLATE_FACTOR * zProperty);
+        textArea.setMaxWidth(TEXT_AREA_TRANSLATE_FACTOR);
+        textArea.setMaxHeight(TEXT_AREA_TRANSLATE_FACTOR);
         textArea.setFont(font);
         textArea.setEditable(false);
         textArea.setMouseTransparent(true);
