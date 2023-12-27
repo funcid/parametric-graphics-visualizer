@@ -1,6 +1,7 @@
 package me.func.parametricfunction.handler;
 
 import javafx.scene.Camera;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.control.Tooltip;
 import javafx.scene.shape.Rectangle;
@@ -10,13 +11,19 @@ public class CameraHandler {
 
     private static final double MOVE_DISTANCE = 100.0;
 
-    public static void addEventHandlers(Scene scene, Rectangle rectangle) {
+    public void addEventHandlers(Scene scene, Rectangle rectangle) {
         addKeyboardEventHandler(scene);
         addMouseMoveEventHandler(scene, rectangle);
         addScrollEventHandler(scene);
     }
 
-    private static void addKeyboardEventHandler(Scene scene) {
+    public Camera initializeCamera() {
+        Camera camera = new PerspectiveCamera(true);
+        camera.setFarClip(500000);
+        return camera;
+    }
+
+    private void addKeyboardEventHandler(Scene scene) {
         scene.setOnKeyPressed(event -> {
             Camera camera = scene.getCamera();
 
@@ -43,14 +50,14 @@ public class CameraHandler {
         });
     }
 
-    private static void addMouseMoveEventHandler(Scene scene, Rectangle rectangle) {
+    private void addMouseMoveEventHandler(Scene scene, Rectangle rectangle) {
         scene.setOnMouseMoved(event -> {
             Tooltip tooltip = new Tooltip("X: " + event.getX() + "; Y: " + event.getY());
             Tooltip.install(rectangle, tooltip);
         });
     }
 
-    private static void addScrollEventHandler(Scene scene) {
+    private void addScrollEventHandler(Scene scene) {
         scene.setOnScroll(event -> {
             Camera camera = scene.getCamera();
             double delta = event.getDeltaY();
